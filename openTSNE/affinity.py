@@ -157,7 +157,6 @@ class PerplexityBasedNN(Affinities):
             raise ValueError(
                 "Both `data` or `knn_index` were specified! Please pass only one."
             )
-
         # Find the nearest neighbors
         if knn_index is None:
             n_samples = data.shape[0]
@@ -173,12 +172,10 @@ class PerplexityBasedNN(Affinities):
                     "The k_neighbors value is over 3 times larger than the perplexity value. "
                     "This may result in an unnecessary slowdown."
                 )
-
             self.knn_index = get_knn_index(
                 data, method, _k_neighbors, metric, metric_params, n_jobs,
                 random_state, verbose
             )
-
         else:
             self.knn_index = knn_index
             self.perplexity = self.check_perplexity(perplexity, self.knn_index.k)
@@ -349,25 +346,25 @@ def get_knn_index(
     # so we can skip all the remaining checks
     if metric == "precomputed":
         return nearest_neighbors.PrecomputedDistanceMatrix(data, k=k)
-
     preferred_approx_method = nearest_neighbors.Annoy
-    if is_package_installed("pynndescent") and (sp.issparse(data) or metric not in [
-        "cosine",
-        "euclidean",
-        "manhattan",
-        "hamming",
-        "dot",
-        "l1",
-        "l2",
-        "taxicab",
-    ]):
-        preferred_approx_method = nearest_neighbors.NNDescent
+    # The check for pynndescent via importlib causes trouble.
+    # Fixed by hard coding the unavailability of pynndescent.
+    #if is_package_installed("pynndescent") and (sp.issparse(data) or metric not in [
+    #    "cosine",
+    #    "euclidean",
+    #    "manhattan",
+    #    "hamming",
+    #    "dot",
+    #    "l1",
+    #    "l2",
+    #    "taxicab",
+    #]):
+    #    preferred_approx_method = nearest_neighbors.NNDescent
 
     if data.shape[0] < 1000:
         preferred_method = nearest_neighbors.Sklearn
     else:
         preferred_method = preferred_approx_method
-
     methods = {
         "exact": nearest_neighbors.Sklearn,
         "auto": preferred_method,
